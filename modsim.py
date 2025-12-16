@@ -73,16 +73,25 @@ def carpisma_kinematigi(enerji, atom):
     return 0.5 * enerji * ((1 + alpha) + (1 - alpha) * cos_theta)
 
 def moderasyon_simulasyonu(malzeme):
-    print(f"\n>>> {malzeme.isim} Simülasyonu Başladı...")
+    print(f"\n>>> {malzeme.isim} Simülasyonu Başladı (N={SIMULASYON_NOTRON_SAYISI})...")
     carpisma_verileri = []
     absorbe_sayisi = 0
     termalize_sayisi = 0
+    
+    # Grafik için örnek bir nötronun enerji geçmişini tutacağız
+    ornek_iz = [] 
     
     start = time.time()
     for i in range(SIMULASYON_NOTRON_SAYISI):
         E = E_BASLANGIC
         carpisma = 0
         aktif = True
+        
+        # Sadece ilk nötronun izini kaydedelim (Örneklem)
+        bu_ornek_kayit = (i == 0)
+        if bu_ornek_kayit:
+            ornek_iz.append(E) # Başlangıç enerjisini ekle
+            
         while E > E_TERMAL and aktif:
             if random.random() < malzeme.P_absorpsiyon:
                 aktif = False
@@ -90,14 +99,21 @@ def moderasyon_simulasyonu(malzeme):
             else:
                 hedef = malzeme.hedef_atom_sec()
                 carpisma += 1
+                
+                # Çarpışma öncesi enerji
+                E_eski = E
                 E = carpisma_kinematigi(E, hedef)
+                
+                # İz kaydı
+                if bu_ornek_kayit:
+                    ornek_iz.append(E)
         
         if aktif:
             carpisma_verileri.append(carpisma)
             termalize_sayisi += 1
-    
+            
     sure = time.time() - start
-    return carpisma_verileri, termalize_sayisi, absorbe_sayisi, sure
+    return carpisma_verileri, termalize_sayisi, absorbe_sayisi, sure, ornek_iz
 
 def analiz_modu():
     while True:
@@ -296,50 +312,72 @@ while True:
     print("[4] Çıkış")
     
     ana_secim = input("\nNe yapmak istersiniz? (1-4): ").strip()
-    
+        
     if ana_secim == '1':
-    
+        # --- STANDART TEST ---
         sonuclar = {}
+        ornek_izler = {} # Her malzeme için bir nötronun izini saklayacağız
+        
         print("\nSimülasyon Başlıyor...")
         for mat in aktif_malzemeler:
-            data, termal, absorbe, sure = moderasyon_simulasyonu(mat)
+            # Fonksiyon artık 5 değer döndürüyor (ornek_iz eklendi)
+            data, termal, absorbe, sure, iz = moderasyon_simulasyonu(mat)
+            
             ort = np.mean(data) if data else 0
             verim = (termal / SIMULASYON_NOTRON_SAYISI) * 100
-            sonuclar[mat.isim] = {"Ort": ort, "Verim": verim}
-            print(f"--> {mat.isim}: Ort. Çarpışma={ort:.1f}, Verim=%{verim:.1f}")
             
-        # Grafik
+            sonuclar[mat.isim] = {"Ort": ort, "Verim": verim}
+            ornek_izler[mat.isim] = iz # İzi sakla
+            
+            # Ortalama Enerji Kaybı Yüzdesini Hesapla (Yaklaşık)
+            if len(iz) > 1:
+                # E_son / E_ilk oranından ziyade, logaritmik düşüşe bakıyoruz
+                print(f"--> {mat.isim}: Ort. Çarpışma={ort:.1f}, Verim=%{verim:.1f}")
+            
+        # --- GRAFİK ÇİZİMİ (3 Grafik: Çarpışma, Verim, Enerji Düşüşü) ---
         isimler = list(sonuclar.keys())
         degerler = [sonuclar[k]["Ort"] for k in isimler]
         verimler = [sonuclar[k]["Verim"] for k in isimler]
         
+        renkler = ['#1f77b4', '#17becf', '#7f7f7f', '#2ca02c', '#d62728', '#9467bd']
         
-        renkler = ["#80d91a", "#d60e68", "#b61010", '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2']
-        
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+        # 1 Satır, 3 Sütunlu Grafik Açıyoruz
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
 
-        # Grafik 1
+        # Grafik 1: Çarpışma Sayısı
         ax1.bar(isimler, degerler, color=renkler[:len(isimler)])
-        ax1.set_title("Yavaşlatma Performansı (Düşük = İyi)")
-        ax1.set_ylabel("Ortalama Çarpışma Sayısı")
+        ax1.set_title("Ortalama Çarpışma Sayısı")
+        ax1.set_ylabel("Adet")
         for i, v in enumerate(degerler):
             ax1.text(i, v + 1, f"{v:.1f}", ha='center')
 
-        # Grafik 2
+        # Grafik 2: Verim
         ax2.bar(isimler, verimler, color=renkler[:len(isimler)])
-        ax2.set_title("Nötron Ekonomisi (Yüksek = İyi)")
-        ax2.set_ylabel("Termalizasyon Verimi (%)")
-        
-        
-        if verimler:
-            ax2.set_ylim(min(verimler) - 5, 105)
-        else:
-            ax2.set_ylim(0, 105)
-            
+        ax2.set_title("Moderasyon Verimi (%)")
+        ax2.set_ylim(0, 105)
         for i, v in enumerate(verimler):
-            ax2.text(i, v + 0.2, f"%{v:.1f}", ha='center')
+            ax2.text(i, v + 1, f"%{v:.1f}", ha='center')
 
-        plt.suptitle(f"Moderatör Karşılaştırma Analizi (N={SIMULASYON_NOTRON_SAYISI})", fontsize=14)
+        # Grafik 3: ENERJİ KAYBI GEÇMİŞİ (YENİ)
+        
+
+        # [Image of Logarithmic decay graph]
+
+        for i, isim in enumerate(isimler):
+            iz = ornek_izler[isim]
+            # Her malzeme için çizgi çiz
+            ax3.plot(iz, label=isim, color=renkler[i], linewidth=2)
+        
+        ax3.set_yscale('log') # LOGARİTMİK EKSEN (Çok Önemli!)
+        ax3.set_title("Tek Bir Nötronun Enerji Kaybı\n(Logaritmik Ölçek)")
+        ax3.set_xlabel("Çarpışma Sırası")
+        ax3.set_ylabel("Enerji (eV)")
+        ax3.grid(True, which="both", ls="--", alpha=0.5)
+        
+        # Termal enerji sınırını çizgi olarak göster
+        ax3.axhline(y=0.025, color='red', linestyle=':', label='Termal Sınır (0.025 eV)')
+        ax3.legend()
+
         plt.tight_layout()
         plt.show()
 
