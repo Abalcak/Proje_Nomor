@@ -278,6 +278,11 @@ if mod == "Standart Test & Karşılaştırma":
 elif mod == "Yeni Malzeme Ekle":
     st.subheader("Yeni Moderatör Malzemesi Ekle")
     
+    # Dinamik bileşen sayısı (Form dışına alındı ki anlık güncellensin)
+    c_sayi, c_bos = st.columns([3, 1])
+    with c_sayi:
+        bilesen_sayisi = st.number_input("Bileşen Sayısı (Farklı atom türü sayısı)", min_value=1, max_value=10, value=1, step=1)
+
     with st.form("yeni_malzeme_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -286,18 +291,19 @@ elif mod == "Yeni Malzeme Ekle":
         
         st.markdown("##### Bileşen Atomlar")
         
-        # Basitlik için en fazla 2 farklı atom türü eklemeye izin verelim şimdilik
-        # Daha dinamik bir yapı için session_state kullanılabilir ama form içinde zor.
+        secilen_atomlar = []
+        secilen_adetler = []
         
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            atom1_sembol = st.selectbox("1. Atom", list(st.session_state.atomlar.keys()), key="a1")
-        with c2:
-            atom1_adet = st.number_input("Adet", 1, 100, 1, key="ad1")
-        with c3:
-            atom2_sembol = st.selectbox("2. Atom (Opsiyonel)", ["Yok"] + list(st.session_state.atomlar.keys()), key="a2")
-        with c4:
-            atom2_adet = st.number_input("Adet", 0, 100, 0, key="ad2")
+        # Her bileşen için bir satır oluştur
+        for i in range(int(bilesen_sayisi)):
+            c_atom, c_adet = st.columns([3, 2])
+            with c_atom:
+                # Benzersiz key'ler önemli
+                atom_sembol = st.selectbox(f"{i+1}. Atom Türü", list(st.session_state.atomlar.keys()), key=f"atom_secim_{i}")
+                secilen_atomlar.append(atom_sembol)
+            with c_adet:
+                adet_val = st.number_input(f"Adet", min_value=1, value=1, key=f"atom_adet_{i}", label_visibility="visible")
+                secilen_adetler.append(adet_val)
 
         sunmitted = st.form_submit_button("Malzemeyi Ekle")
         
@@ -306,14 +312,14 @@ elif mod == "Yeni Malzeme Ekle":
                 st.error("Lütfen bir malzeme adı girin.")
             else:
                 bilesenler = {}
-                # Atom 1
-                atom_obj1 = st.session_state.atomlar[atom1_sembol]
-                bilesenler[atom_obj1] = atom1_adet
-                
-                # Atom 2
-                if atom2_sembol != "Yok" and atom2_adet > 0:
-                    atom_obj2 = st.session_state.atomlar[atom2_sembol]
-                    bilesenler[atom_obj2] = atom2_adet
+                # Tüm seçimleri işle
+                for sembol, adet in zip(secilen_atomlar, secilen_adetler):
+                    atom_obj = st.session_state.atomlar[sembol]
+                    # Eğer aynı atomu birden fazla kez seçtiyse üzerine ekle
+                    if atom_obj in bilesenler:
+                        bilesenler[atom_obj] += adet
+                    else:
+                        bilesenler[atom_obj] = adet
                 
                 yeni_mat = Malzeme(yeni_isim, bilesenler, yeni_yogunluk)
                 st.session_state.malzemeler.append(yeni_mat)
