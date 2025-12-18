@@ -7,7 +7,7 @@ import time
 AVOGADRO = 0.6022        # 10^24 cinsinden
 E_BASLANGIC = 2000000.0  # eV
 E_TERMAL = 0.025         # eV
-SIMULASYON_NOTRON_SAYISI = 10000 # Her malzeme için deneme sayısı
+SIMULASYON_NOTRON_SAYISI = 100000 # Her malzeme için deneme sayısı
 
 class Atom:
     def __init__(self, sembol, A, sigma_s, sigma_a):

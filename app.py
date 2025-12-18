@@ -149,7 +149,9 @@ if 'atomlar' not in st.session_state:
         "H": Atom("H", 1, 20.0, 0.332),
         "D": Atom("D", 2, 3.4, 0.0005),
         "C": Atom("C", 12, 4.8, 0.0035),
-        "O": Atom("O", 16, 3.8, 0.0002)
+        "O": Atom("O", 16, 3.8, 0.0002),
+        "Be": Atom("Be", 9, 6.15, 0.0092),
+        "Zr": Atom("Zr", 91.2, 6.5, 0.185) # Zirkonyum Sadece ZrH ile kullanılır çok havalı 
     }
 
 if 'malzemeler' not in st.session_state:
@@ -157,12 +159,14 @@ if 'malzemeler' not in st.session_state:
     D = st.session_state.atomlar["D"]
     C = st.session_state.atomlar["C"]
     O = st.session_state.atomlar["O"]
+    Zr = st.session_state.atomlar["Zr"]
     
     st.session_state.malzemeler = [
         Malzeme("Hafif Su", {H: 2, O: 1}, yogunluk=1.0),
         Malzeme("Ağır Su", {D: 2, O: 1}, yogunluk=1.105),
         Malzeme("Grafit", {C: 1}, yogunluk=1.70),
-        Malzeme("Polietilen", {C: 1, H: 2}, yogunluk=0.95)
+        Malzeme("Polietilen", {C: 1, H: 2}, yogunluk=0.95),
+        Malzeme("ZrH (Zirkonyum Hidrür)", {Zr: 1, H: 1.6}, yogunluk=5.60)
     ]
 
 # --- ARAYÜZ ---
@@ -179,7 +183,7 @@ with st.sidebar:
 
     
     st.subheader("Simülasyon Ayarları")
-    sim_notron_sayisi = st.slider("Nötron Sayısı (Her malzeme için)", 100, 20000, 1000, step=100)
+    sim_notron_sayisi = st.slider("Nötron Sayısı (Her malzeme için)", 100, 1000000, 1000, step=100)
     
     st.info(f"Başlangıç Enerjisi: {E_BASLANGIC/1e6} MeV\nTermal Sınır: {E_TERMAL} eV")
 
