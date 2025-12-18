@@ -175,7 +175,7 @@ Monte Carlo yöntemi ile simüle eder.
 # Yan Menü
 with st.sidebar:
     st.header("⚙️ Kontrol Paneli")
-    mod = st.radio("Çalışma Modu", ["Standart Test & Karşılaştırma", "Yeni Malzeme Tasarımı", "Parametrik Analiz"])
+    mod = st.radio("Çalışma Modu", ["Standart Test & Karşılaştırma", "Yeni Malzeme Ekle", "Parametrik Analiz"])
 
     
     st.subheader("Simülasyon Ayarları")
@@ -275,8 +275,8 @@ if mod == "Standart Test & Karşılaştırma":
             st.pyplot(fig2)
 
 # --- MOD 2: AR-GE MODU ---
-elif mod == "Yeni Malzeme Tasarımı":
-    st.subheader("Yeni Moderatör Malzemesi Tasarla")
+elif mod == "Yeni Malzeme Ekle":
+    st.subheader("Yeni Moderatör Malzemesi Ekle")
     
     with st.form("yeni_malzeme_form"):
         col1, col2 = st.columns(2)
