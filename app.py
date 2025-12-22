@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 
-# --- SAYFA YAPILANDIRMASI ---
+# SAYFA YAPILANDIRMASI 
 st.set_page_config(
     page_title="MODSIM: Nötron Simülatörü",
     page_icon="none",
@@ -13,14 +13,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 1. FİZİKSEL SABİTLER ---
+#  FİZİKSEL SABİTLER 
 AVOGADRO = 0.6022        # 10^24 cinsinden
 E_BASLANGIC = 2000000.0  # eV
 E_TERMAL = 0.025         # eV
-# Simülasyon nötron sayısı artık kullanıcı tarafından değiştirilebilir
 
-# --- SINIF TANIMLARI ---
-# Not: modsim.py'dan alınan temel mantık
 class Atom:
     def __init__(self, sembol, A, sigma_s, sigma_a):
         self.sembol = sembol
@@ -58,13 +55,13 @@ class Malzeme:
             self.atom_secim_listesi.append([atom, Sigma_s_i])
 
         self.Sigma_tot = self.Sigma_s_toplam + self.Sigma_a_toplam
-        # Sıfıra bölme hatası önlemi
+        # Sıfıra bölme 
         if self.Sigma_tot > 0:
             self.P_absorpsiyon = self.Sigma_a_toplam / self.Sigma_tot
         else:
             self.P_absorpsiyon = 0
             
-        # 4. Seçim Olasılıkları (Kümülatif)
+        # Seçim Olasılıkları 
         kümülatif = 0
         self.hedef_atom_araliklari = []
         if self.Sigma_s_toplam > 0:
@@ -73,7 +70,7 @@ class Malzeme:
                 kümülatif += pay
                 self.hedef_atom_araliklari.append((kümülatif, item[0]))
         else:
-            # Eğer hiç saçılma yoksa, varsayılan olarak ilk atomu al (Hata önleme)
+            # Eğer hiç saçılma yoksa
             if self.atom_secim_listesi:
                  self.hedef_atom_araliklari.append((1.0, self.atom_secim_listesi[0][0]))
 
@@ -85,7 +82,7 @@ class Malzeme:
             return self.hedef_atom_araliklari[-1][1]
         return None
 
-# --- SİMÜLASYON FONKSİYONLARI ---
+# SİMÜLASYON FONKSİYONLARI 
 def carpisma_kinematigi(enerji, atom):
     cos_theta = 2 * random.random() - 1
     alpha = atom.alpha
@@ -187,7 +184,7 @@ with st.sidebar:
     
     st.info(f"Başlangıç Enerjisi: {E_BASLANGIC/1e6} MeV\nTermal Sınır: {E_TERMAL} eV")
 
-# --- MOD 1: STANDART TEST ---
+
 if mod == "Standart Test & Karşılaştırma":
     st.subheader("📊 Malzeme Performans Karşılaştırması")
     
@@ -278,11 +275,11 @@ if mod == "Standart Test & Karşılaştırma":
             ax3.grid(True, which="both", alpha=0.3)
             st.pyplot(fig2)
 
-# --- MOD 2: AR-GE MODU ---
+
 elif mod == "Yeni Malzeme Ekle":
     st.subheader("Yeni Moderatör Malzemesi Ekle")
     
-    # Dinamik bileşen sayısı (Form dışına alındı ki anlık güncellensin)
+    # Dinamik bileşen sayısı
     c_sayi, c_bos = st.columns([3, 1])
     with c_sayi:
         bilesen_sayisi = st.number_input("Bileşen Sayısı (Farklı atom türü sayısı)", min_value=1, max_value=10, value=1, step=1)
@@ -319,7 +316,7 @@ elif mod == "Yeni Malzeme Ekle":
                 # Tüm seçimleri işle
                 for sembol, adet in zip(secilen_atomlar, secilen_adetler):
                     atom_obj = st.session_state.atomlar[sembol]
-                    # Eğer aynı atomu birden fazla kez seçtiyse üzerine ekle
+
                     if atom_obj in bilesenler:
                         bilesenler[atom_obj] += adet
                     else:
@@ -378,7 +375,6 @@ elif mod == "Parametrik Analiz":
             for i, sig_a in enumerate(sig_a_degerleri):
                 atom_test = Atom("Test", A=1, sigma_s=20.0, sigma_a=sig_a)
                 mat = Malzeme("TestMat", {atom_test: 1}, yogunluk=1.0)
-                # Hızlı simülasyon (az nötronlu)
                 _, termal, _, _, _ = moderasyon_simulasyonu(mat, 500, None)
                 verimler.append((termal/500)*100)
                 bar.progress((i+1)/len(sig_a_degerleri))
